@@ -3,86 +3,504 @@ export const UI_HTML = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Broca</title>
+<title>BROCA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --border: #2a2a2a;
-    --text: #e8e8e8;
-    --muted: #666;
-    --accent: #7c6af7;
-    --accent-dim: #2d2550;
-    --answer: #d4edda;
-    --answer-bg: #0d2218;
-    --error: #f87171;
-    --error-bg: #1f0d0d;
-  }
+:root {
+  --bg: #060608;
+  --surface: #0c0c10;
+  --surface2: #111118;
+  --border: #1e1e2e;
+  --text: #c8ccd8;
+  --muted: #4a4a6a;
+  --dim: #2a2a3a;
+  --phosphor: #00e5a0;
+  --phosphor-dim: #00e5a015;
+  --phosphor-glow: 0 0 8px #00e5a066, 0 0 20px #00e5a022;
+  --amber: #f5a623;
+  --amber-dim: #f5a62318;
+  --cyan: #38bdf8;
+  --error: #ff5f5f;
+  --error-bg: #1a0808;
+  --mono: 'IBM Plex Mono', monospace;
+  --display: 'Syne', sans-serif;
+}
 
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; }
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow: hidden;
+}
 
-  .layout { display: flex; flex-direction: column; height: 100vh; max-width: 780px; margin: 0 auto; padding: 0 16px; }
+/* ── Scanline overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
 
-  header { padding: 20px 0 16px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 10px; }
-  header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
-  header span { font-size: 13px; color: var(--muted); }
+/* ── Animated grid background ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: gridDrift 40s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes gridDrift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 48px 48px; }
+}
 
-  .feed { flex: 1; overflow-y: auto; padding: 20px 0 8px; display: flex; flex-direction: column; gap: 18px; }
-  .feed:empty::after { content: 'Ask anything about your agent stack.'; color: var(--muted); font-size: 14px; margin-top: 40px; text-align: center; }
+/* ── Layout ── */
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
 
-  .msg { display: flex; flex-direction: column; gap: 6px; }
-  .msg.question .bubble { background: var(--accent-dim); color: #c9c2ff; border-radius: 12px 12px 4px 12px; align-self: flex-end; max-width: 85%; }
-  .msg.answer .bubble  { background: var(--answer-bg); color: var(--answer); border-radius: 12px 12px 12px 4px; align-self: flex-start; max-width: 92%; }
-  .msg.error .bubble   { background: var(--error-bg); color: var(--error); border-radius: 12px; align-self: flex-start; max-width: 92%; }
-  .msg.thinking .bubble { background: var(--surface); color: var(--muted); border-radius: 12px; align-self: flex-start; font-style: italic; }
+/* ── Header ── */
+header {
+  padding: 22px 0 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
 
-  .bubble { padding: 10px 14px; line-height: 1.55; font-size: 14.5px; }
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
 
-  .meta { font-size: 11.5px; color: var(--muted); padding: 0 4px; display: flex; gap: 8px; align-items: center; }
-  .msg.question .meta { align-self: flex-end; }
-  .meta .service { background: var(--border); border-radius: 4px; padding: 1px 6px; font-family: monospace; }
+.logo-word {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--phosphor);
+  text-shadow: var(--phosphor-glow);
+  animation: logoBreath 4s ease-in-out infinite;
+}
+@keyframes logoBreath {
+  0%, 100% { text-shadow: 0 0 8px #00e5a066, 0 0 20px #00e5a022; }
+  50%       { text-shadow: 0 0 14px #00e5a099, 0 0 36px #00e5a044, 0 0 60px #00e5a011; }
+}
 
-  .details { font-size: 12px; color: var(--muted); padding: 0 4px; }
-  .details summary { cursor: pointer; user-select: none; }
-  .details summary:hover { color: var(--text); }
-  .details pre { margin-top: 8px; padding: 10px; background: var(--surface); border-radius: 6px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; line-height: 1.5; }
+.logo-sub {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
 
-  .input-row { padding: 12px 0 20px; display: flex; gap: 10px; border-top: 1px solid var(--border); }
-  textarea { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); padding: 10px 14px; font-size: 14.5px; font-family: inherit; resize: none; outline: none; line-height: 1.5; min-height: 44px; max-height: 140px; transition: border-color 0.15s; }
-  textarea:focus { border-color: var(--accent); }
-  textarea::placeholder { color: var(--muted); }
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
 
-  button { background: var(--accent); border: none; border-radius: 10px; color: white; cursor: pointer; font-size: 14px; font-weight: 500; padding: 0 18px; min-height: 44px; transition: opacity 0.15s; white-space: nowrap; }
-  button:hover { opacity: 0.85; }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--phosphor);
+  box-shadow: 0 0 6px var(--phosphor);
+  animation: pulse 2s ease-in-out infinite;
+  display: inline-block;
+  margin-right: 4px;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
 
-  .dot-flashing { display: inline-flex; gap: 4px; align-items: center; padding: 2px 0; }
-  .dot-flashing span { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: blink 1.2s infinite; }
-  .dot-flashing span:nth-child(2) { animation-delay: 0.2s; }
-  .dot-flashing span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
+/* ── Feed ── */
+.feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.feed::-webkit-scrollbar { width: 4px; }
+.feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .feed-section { margin-top: 8px; }
-  .feed-section h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 10px; }
-  .event { font-size: 13px; color: var(--muted); padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; gap: 10px; }
-  .event:last-child { border-bottom: none; }
-  .event .time { white-space: nowrap; font-size: 11.5px; color: #444; min-width: 80px; }
+/* ── Messages ── */
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  animation: msgIn 0.25s ease-out both;
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Question bubble — command prompt style */
+.msg.question .bubble {
+  align-self: flex-end;
+  max-width: 80%;
+  background: var(--amber-dim);
+  border: 1px solid #f5a62330;
+  border-radius: 2px 12px 12px 2px;
+  color: var(--amber);
+  padding: 10px 14px 10px 36px;
+  position: relative;
+  font-weight: 500;
+}
+.msg.question .bubble::before {
+  content: '>';
+  position: absolute;
+  left: 14px;
+  top: 10px;
+  color: var(--phosphor);
+  font-weight: 600;
+  text-shadow: 0 0 8px var(--phosphor);
+}
+
+/* Answer bubble — intelligence responding */
+.msg.answer .bubble {
+  align-self: flex-start;
+  max-width: 90%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--phosphor);
+  border-radius: 0 12px 12px 0;
+  color: var(--text);
+  padding: 12px 16px;
+  box-shadow: inset 0 0 30px rgba(0,229,160,0.03);
+}
+
+/* Thinking ── */
+.msg.thinking .bubble {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--muted);
+  border-radius: 0 12px 12px 0;
+  padding: 12px 16px;
+  color: var(--muted);
+}
+
+.dot-flashing {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+.dot-flashing span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--phosphor);
+  box-shadow: 0 0 6px var(--phosphor);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+.dot-flashing span:nth-child(2) { animation-delay: 0.2s; }
+.dot-flashing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotPulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+  40%            { transform: scale(1); opacity: 1; }
+}
+
+/* Scan line on thinking bubble */
+.thinking-scan {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--phosphor), transparent);
+  margin-top: 8px;
+  animation: scan 2s linear infinite;
+  opacity: 0.6;
+}
+@keyframes scan {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* Error */
+.msg.error .bubble {
+  align-self: flex-start;
+  max-width: 90%;
+  background: var(--error-bg);
+  border: 1px solid #ff5f5f30;
+  border-left: 2px solid var(--error);
+  border-radius: 0 12px 12px 0;
+  color: var(--error);
+  padding: 12px 16px;
+}
+.msg.error .bubble::before {
+  content: '! ';
+  font-weight: 700;
+}
+
+.bubble { font-size: 13px; line-height: 1.65; }
+
+/* Meta + service tag */
+.meta {
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 0 6px;
+  letter-spacing: 0.5px;
+}
+.msg.question .meta { align-self: flex-end; }
+
+.meta .service {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 7px;
+  font-family: var(--mono);
+  color: var(--phosphor);
+  text-shadow: 0 0 8px #00e5a044;
+  letter-spacing: 1px;
+}
+
+/* Raw data */
+.details {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 0 6px;
+}
+.details summary {
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+.details summary::marker { color: var(--phosphor); }
+.details summary:hover { color: var(--phosphor); }
+.details pre {
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.5;
+  color: var(--muted);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+/* ── Recent activity feed ── */
+.feed-section {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.feed-section-header {
+  padding: 8px 14px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.feed-section-header h2 {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-weight: 400;
+}
+.feed-section-header::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--phosphor);
+  box-shadow: 0 0 6px var(--phosphor);
+  animation: pulse 2s ease-in-out infinite;
+}
+.event {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 7px 14px;
+  border-bottom: 1px solid #1e1e2e55;
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  font-family: var(--mono);
+  transition: background 0.15s;
+}
+.event:last-child { border-bottom: none; }
+.event:hover { background: var(--surface2); color: var(--text); }
+.event .time {
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--dim);
+  min-width: 72px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.event .text { color: #8888aa; }
+.event:hover .text { color: var(--text); }
+
+/* ── Input row ── */
+.input-row {
+  padding: 14px 0 22px;
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+}
+.input-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--phosphor), transparent);
+  opacity: 0.3;
+}
+
+.input-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+.input-wrap::before {
+  content: '>';
+  position: absolute;
+  left: 14px;
+  top: 11px;
+  color: var(--phosphor);
+  font-weight: 600;
+  font-size: 14px;
+  text-shadow: 0 0 8px var(--phosphor);
+  pointer-events: none;
+  z-index: 1;
+  line-height: 1.5;
+}
+
+textarea {
+  flex: 1;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--amber);
+  padding: 10px 14px 10px 34px;
+  font-size: 13px;
+  font-family: var(--mono);
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+  min-height: 44px;
+  max-height: 140px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: var(--phosphor);
+}
+textarea:focus {
+  border-color: #00e5a040;
+  box-shadow: 0 0 0 1px #00e5a015, 0 0 20px #00e5a008;
+}
+textarea::placeholder { color: var(--muted); font-weight: 300; }
+
+button#send {
+  background: transparent;
+  border: 1px solid var(--phosphor);
+  border-radius: 6px;
+  color: var(--phosphor);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 0 20px;
+  min-height: 44px;
+  min-width: 80px;
+  transition: all 0.15s;
+  text-shadow: 0 0 8px var(--phosphor);
+  box-shadow: 0 0 10px #00e5a015, inset 0 0 10px #00e5a008;
+  position: relative;
+  overflow: hidden;
+}
+button#send::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--phosphor);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+button#send:hover {
+  background: #00e5a012;
+  box-shadow: 0 0 16px #00e5a033, inset 0 0 16px #00e5a010;
+}
+button#send:active::after { opacity: 0.12; }
+button#send:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 </style>
 </head>
 <body>
 <div class="layout">
   <header>
-    <h1>Broca</h1>
-    <span>agent OS explorer</span>
+    <div class="logo">
+      <span class="logo-word">BROCA</span>
+      <span class="logo-sub">agent OS explorer</span>
+    </div>
+    <div class="status-bar">
+      <span><span class="status-dot"></span>ONLINE</span>
+    </div>
   </header>
 
   <div class="feed" id="feed"></div>
 
   <div class="input-row">
-    <textarea id="input" placeholder="Ask anything — what tasks are blocked? what did loom do today? is engram healthy?" rows="1"></textarea>
-    <button id="send">Ask</button>
+    <div class="input-wrap">
+      <textarea id="input" placeholder="what tasks are blocked? what did loom do today? which agents are online?" rows="1"></textarea>
+    </div>
+    <button id="send">SEND</button>
   </div>
 </div>
 
@@ -108,7 +526,7 @@ function addMsg(type, content, meta) {
   bubble.className = 'bubble';
 
   if (type === 'thinking') {
-    bubble.innerHTML = '<div class="dot-flashing"><span></span><span></span><span></span></div>';
+    bubble.innerHTML = '<div class="dot-flashing"><span></span><span></span><span></span></div><div class="thinking-scan"></div>';
   } else {
     bubble.textContent = content;
   }
@@ -200,13 +618,18 @@ fetch('/feed?limit=8').then(r => r.json()).then(events => {
   if (!events.length) return;
   const section = document.createElement('div');
   section.className = 'feed-section';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'feed-section-header';
   const h = document.createElement('h2');
   h.textContent = 'Recent activity';
-  section.appendChild(h);
+  hdr.appendChild(h);
+  section.appendChild(hdr);
+
   events.reverse().forEach(e => {
     const row = document.createElement('div');
     row.className = 'event';
-    row.innerHTML = \`<span class="time">\${timeAgo(e.created_at)}</span><span>\${e.narrative || e.action}</span>\`;
+    row.innerHTML = \`<span class="time">\${timeAgo(e.created_at)}</span><span class="text">\${e.narrative || e.action}</span>\`;
     section.appendChild(row);
   });
   feed.appendChild(section);
