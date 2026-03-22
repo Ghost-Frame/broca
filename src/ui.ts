@@ -19,7 +19,6 @@ export const UI_HTML = `<!DOCTYPE html>
   --dim: #2a2a3a;
   --phosphor: #00e5a0;
   --phosphor-dim: #00e5a015;
-  --phosphor-glow: 0 0 8px #00e5a066, 0 0 20px #00e5a022;
   --amber: #f5a623;
   --amber-dim: #f5a62318;
   --cyan: #38bdf8;
@@ -107,12 +106,6 @@ header {
   font-weight: 800;
   letter-spacing: 4px;
   color: var(--phosphor);
-  text-shadow: var(--phosphor-glow);
-  animation: logoBreath 4s ease-in-out infinite;
-}
-@keyframes logoBreath {
-  0%, 100% { text-shadow: 0 0 8px #00e5a066, 0 0 20px #00e5a022; }
-  50%       { text-shadow: 0 0 14px #00e5a099, 0 0 36px #00e5a044, 0 0 60px #00e5a011; }
 }
 
 .logo-sub {
@@ -136,14 +129,8 @@ header {
   height: 6px;
   border-radius: 50%;
   background: var(--phosphor);
-  box-shadow: 0 0 6px var(--phosphor);
-  animation: pulse 2s ease-in-out infinite;
   display: inline-block;
   margin-right: 4px;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(0.8); }
 }
 
 /* ── Feed ── */
@@ -228,7 +215,6 @@ header {
   height: 5px;
   border-radius: 50%;
   background: var(--phosphor);
-  box-shadow: 0 0 6px var(--phosphor);
   animation: dotPulse 1.4s ease-in-out infinite;
 }
 .dot-flashing span:nth-child(2) { animation-delay: 0.2s; }
@@ -288,7 +274,6 @@ header {
   padding: 1px 7px;
   font-family: var(--mono);
   color: var(--phosphor);
-  text-shadow: 0 0 8px #00e5a044;
   letter-spacing: 1px;
 }
 
@@ -351,8 +336,6 @@ header {
   height: 4px;
   border-radius: 50%;
   background: var(--phosphor);
-  box-shadow: 0 0 6px var(--phosphor);
-  animation: pulse 2s ease-in-out infinite;
 }
 .event {
   font-size: 11px;
@@ -412,7 +395,6 @@ header {
   color: var(--phosphor);
   font-weight: 600;
   font-size: 14px;
-  text-shadow: 0 0 8px var(--phosphor);
   pointer-events: none;
   z-index: 1;
   line-height: 1.5;
@@ -437,8 +419,7 @@ textarea {
   caret-color: var(--phosphor);
 }
 textarea:focus {
-  border-color: #00e5a040;
-  box-shadow: 0 0 0 1px #00e5a015, 0 0 20px #00e5a008;
+  border-color: #00e5a050;
 }
 textarea::placeholder { color: var(--muted); font-weight: 300; }
 
@@ -456,29 +437,18 @@ button#send {
   padding: 0 20px;
   min-height: 44px;
   min-width: 80px;
-  transition: all 0.15s;
-  text-shadow: 0 0 8px var(--phosphor);
-  box-shadow: 0 0 10px #00e5a015, inset 0 0 10px #00e5a008;
-  position: relative;
-  overflow: hidden;
-}
-button#send::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--phosphor);
-  opacity: 0;
-  transition: opacity 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 button#send:hover {
-  background: #00e5a012;
-  box-shadow: 0 0 16px #00e5a033, inset 0 0 16px #00e5a010;
+  background: var(--phosphor);
+  color: var(--bg);
 }
-button#send:active::after { opacity: 0.12; }
+button#send:active {
+  opacity: 0.8;
+}
 button#send:disabled {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: not-allowed;
-  box-shadow: none;
 }
 </style>
 </head>
