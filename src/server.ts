@@ -2,6 +2,7 @@ import { createServer, type ServerResponse, type IncomingMessage } from "node:ht
 import { initDb } from "./db.ts";
 import { narrate, narrateFromTemplate } from "./narrator.ts";
 import { ask } from "./ask.ts";
+import { UI_HTML } from "./ui.ts";
 
 const DB_PATH = process.env.DB_PATH ?? "./broca.db";
 const HOST = process.env.HOST ?? "0.0.0.0";
@@ -175,6 +176,11 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url!, `http://${req.headers.host}`);
     const path = url.pathname;
+
+    if (path === "/" && req.method === "GET") {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      return res.end(UI_HTML);
+    }
 
     if (path === "/health" && req.method === "GET") {
       return json(res, { status: "ok", version: "0.1.0", ...getStats() });
