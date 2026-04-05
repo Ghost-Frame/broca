@@ -93,14 +93,17 @@ async function logAction(
   payload: Record<string, unknown>,
   axonEventId?: number,
   preNarrate = true,
-): Promise<{ id: number; narrative: string | null }> {
+): Promise<Record<string, unknown>> {
   const narrative = preNarrate ? (narrateFromTemplate(action, payload) ?? null) : null;
 
   const row = db.prepare(
-    "INSERT INTO actions (agent, service, action, payload, narrative, axon_event_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
-  ).get(agent, service, action, JSON.stringify(payload), narrative, axonEventId ?? null) as { id: number };
+    "INSERT INTO actions (agent, service, action, payload, narrative, axon_event_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING *"
+  ).get(agent, service, action, JSON.stringify(payload), narrative, axonEventId ?? null) as Record<string, unknown>;
 
-  return { id: row.id, narrative };
+  if (typeof row.payload === "string") {
+    try { row.payload = JSON.parse(row.payload as string); } catch { /* leave as-is */ }
+  }
+  return row;
 }
 
 function getActions(opts: {
@@ -133,8 +136,10 @@ function getActions(opts: {
 function getStats() {
   const total = (db.prepare("SELECT COUNT(*) as c FROM actions").get() as any).c;
   const narrated = (db.prepare("SELECT COUNT(*) as c FROM actions WHERE narrative IS NOT NULL").get() as any).c;
-  const byService = db.prepare("SELECT service, COUNT(*) as count FROM actions GROUP BY service ORDER BY count DESC").all();
-  return { total, narrated, by_service: byService };
+  const by_service = db.prepare("SELECT service, COUNT(*) as count FROM actions GROUP BY service ORDER BY count DESC").all();
+  const by_agent = db.prepare("SELECT agent, COUNT(*) as count FROM actions GROUP BY agent ORDER BY count DESC").all();
+  const by_action = db.prepare("SELECT action, COUNT(*) as count FROM actions GROUP BY action ORDER BY count DESC").all();
+  return { total, narrated, by_service, by_agent, by_action };
 }
 
 // ============================================================================
