@@ -4,7 +4,6 @@ Broca is an agent action log and natural language narrator. It records what ever
 
 - **Port:** 5000
 - **Stack:** Node 22, libsql (SQLite-compatible embedded database)
-- **Org:** [Ghost-Frame/broca](https://github.com/Ghost-Frame/broca)
 
 ---
 
