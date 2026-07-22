@@ -217,6 +217,14 @@ Natural language query over recent actions. Authenticated.
 
 **Response** `200` -- synthesized answer with cited action IDs.
 
+`question` is capped at 2000 characters.
+
+`/ask` works without an LLM configured. When `LLM_URL` is unset, or the LLM call
+fails, Broca falls back to keyword routing to pick a service and returns a plain
+deterministic summary of the result rather than failing the request. The response
+shape is the same either way, so the endpoint always answers `200` unless the
+downstream service call itself fails.
+
 ---
 
 ### Ingest (Axon webhook)

@@ -479,6 +479,7 @@ const feed = document.getElementById('feed');
 const input = document.getElementById('input');
 const send = document.getElementById('send');
 
+// Formats an ISO timestamp as a compact relative age.
 function timeAgo(iso) {
   const d = new Date(iso.includes('T') ? iso : iso + 'Z');
   const s = Math.floor((Date.now() - d) / 1000);
@@ -488,6 +489,7 @@ function timeAgo(iso) {
   return Math.floor(s/86400) + 'd ago';
 }
 
+// Appends one question, answer, progress, or error message to the dashboard.
 function addMsg(type, content, meta) {
   const div = document.createElement('div');
   div.className = 'msg ' + type;
@@ -531,6 +533,7 @@ function addMsg(type, content, meta) {
   return div;
 }
 
+// Sends one dashboard question to Broca and renders the response.
 async function ask(question) {
   addMsg('question', question);
   const thinking = addMsg('thinking');
@@ -577,6 +580,7 @@ input.addEventListener('keydown', e => {
   }
 });
 
+// Resizes the question input to fit its current content within the height cap.
 function autoResize() {
   input.style.height = 'auto';
   input.style.height = Math.min(input.scrollHeight, 140) + 'px';
@@ -596,10 +600,20 @@ fetch('/feed?limit=8').then(r => r.json()).then(events => {
   hdr.appendChild(h);
   section.appendChild(hdr);
 
+  // Built with createElement/textContent rather than innerHTML on purpose.
+  // Narrative and action text originates from POST /ingest, which is
+  // deliberately unauthenticated, so it must never be parsed as markup.
   events.reverse().forEach(e => {
     const row = document.createElement('div');
     row.className = 'event';
-    row.innerHTML = \`<span class="time">\${timeAgo(e.created_at)}</span><span class="text">\${e.narrative || e.action}</span>\`;
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'time';
+    timeSpan.textContent = timeAgo(e.created_at);
+    const textSpan = document.createElement('span');
+    textSpan.className = 'text';
+    textSpan.textContent = e.narrative || e.action || '';
+    row.appendChild(timeSpan);
+    row.appendChild(textSpan);
     section.appendChild(row);
   });
   feed.appendChild(section);

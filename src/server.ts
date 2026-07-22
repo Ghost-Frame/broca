@@ -32,10 +32,12 @@ function json(res: ServerResponse, data: unknown, status = 200) {
   res.end(JSON.stringify(data));
 }
 
+// Writes a JSON error response with the requested status.
 function err(res: ServerResponse, message: string, status = 400) {
   json(res, { error: message }, status);
 }
 
+// Applies the configured CORS policy to one response.
 function applyCors(origin: string | undefined, res: ServerResponse) {
   if (!CORS_ALLOW_ORIGIN) return;
   if (CORS_ALLOW_ORIGIN === "*" || origin === CORS_ALLOW_ORIGIN) {
@@ -46,6 +48,7 @@ function applyCors(origin: string | undefined, res: ServerResponse) {
   }
 }
 
+// Validates the request bearer token unless authentication is disabled.
 function authenticate(req: IncomingMessage): boolean {
   if (AUTH_DISABLED) return true;
   const auth = req.headers.authorization;
@@ -53,6 +56,7 @@ function authenticate(req: IncomingMessage): boolean {
   return auth.slice(7) === BROCA_API_KEY;
 }
 
+// Reads and validates a size-limited JSON object request body.
 async function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -77,6 +81,7 @@ async function readBody(req: IncomingMessage): Promise<Record<string, unknown>> 
   });
 }
 
+// Parses and clamps a numeric query parameter to an allowed range.
 function bounded(v: string | null, fallback: number, min: number, max: number): number {
   const n = Number.parseInt(v ?? "", 10);
   return Number.isFinite(n) ? Math.min(Math.max(n, min), max) : fallback;
@@ -106,6 +111,7 @@ async function logAction(
   return row;
 }
 
+// Queries stored actions using optional agent, action, project, and time filters.
 function getActions(opts: {
   agent?: string;
   service?: string;
@@ -133,6 +139,7 @@ function getActions(opts: {
   }));
 }
 
+// Returns aggregate action counts and recent activity statistics.
 function getStats() {
   const total = (db.prepare("SELECT COUNT(*) as c FROM actions").get() as any).c;
   const narrated = (db.prepare("SELECT COUNT(*) as c FROM actions WHERE narrative IS NOT NULL").get() as any).c;
@@ -314,6 +321,11 @@ const server = createServer(async (req, res) => {
       const question = body.question as string | undefined;
       if (!question || typeof question !== "string" || !question.trim()) {
         return err(res, "question (string) required");
+      }
+      // Cap the question length so an oversized prompt cannot be pushed
+      // through to the configured LLM endpoint.
+      if ([...question].length > 2000) {
+        return err(res, "question must be 2000 characters or fewer");
       }
       try {
         const result = await ask(question.trim());
